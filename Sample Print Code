@@ -1,0 +1,86 @@
+Private Function PrintFundRequest() As Boolean
+        Dim IsPrinted As Boolean = False
+        Dim myCRT As New crtFundRequestSummary()
+        Dim IngresCM As New IngresCommand("select m.brcode, b.branch, count(d.accountno) as mplcount, " _
+                                          & "sum(d.amount) as amount from cc_batch_master m " _
+                                          & "inner join cc_batch_detail d on m.batch_ref_no = d.batch_ref_no " _
+                                          & "inner join cc_ref_hdmfbranch b on m.brcode = b.brcode " _
+                                          & "where m.file_no = '" & FileNo & "' group by m.brcode, " _
+                                          & "b.branch order by m.brcode", IngresConn)
+        Dim IngresDA As New IngresDataAdapter(IngresCM)
+        Dim DS As New DataSet
+        Try
+            IngresDA.Fill(DS, "CCDistribution")
+            Dim DT As DataTable = DS.Tables("CCDistribution")
+            If DT.Rows.Count > 0 Then
+                For Each rptOBJ As ReportObject In myCRT.Section2.ReportObjects
+                    If rptOBJ.Kind = ReportObjectKind.TextObject Then
+                        Select Case rptOBJ.Name.ToUpper()
+                            'Case "TXTHEADER"
+                            '    Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                            '    txtOBj.Text = "Pag-IBIG Fund Cash Card Credit Summary Report"
+                           'Case "TXTCASHCARDPROJECT"
+                            '    Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                            '    txtOBj.Text = "Citibank Cash Card"
+                            Case "TXTFILENO"
+                                Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                                txtOBj.Text = "Citibank File ID : " & FileNo
+                        End Select
+                    End If
+                    Application.DoEvents()
+                Next
+                For Each rptOBJ As ReportObject In myCRT.Section4.ReportObjects
+                    If rptOBJ.Kind = ReportObjectKind.TextObject Then
+                        Select Case rptOBJ.Name.ToUpper()
+                            Case "TXTAPPROVEDBY"
+                                Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                                txtOBj.Text = SignApprovedName
+                            Case "TXTAPPROVEDPOS"
+                                Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                                txtOBj.Text = SignApprovedPos
+                            Case "TXTPREPAREDBY"
+                                Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                                txtOBj.Text = SignPreparedName
+                            Case "TXTPREPAREDPOS"
+                                Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                                txtOBj.Text = SignPreparedPos
+                            Case "TXTAPPROVEDBYVP"
+                                Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                                txtOBj.Text = SignApprovedNameVP
+                            Case "TXTAPPROVEDPOSVP"
+                                Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                                txtOBj.Text = SignApprovedPosVP
+                        End Select
+                    End If
+                    Application.DoEvents()
+                Next
+                For Each rptOBJ As ReportObject In myCRT.Section5.ReportObjects
+                    If rptOBJ.Kind = ReportObjectKind.TextObject Then
+                        Select Case rptOBJ.Name.ToUpper()
+                            Case "TXTAPPVERSION"
+                                Dim txtOBj As TextObject = CType(rptOBJ, TextObject)
+                                txtOBj.Text = ApplicationNameversion
+                        End Select
+                    End If
+                    Application.DoEvents()
+                Next
+                myCRT.SetDataSource(DT)
+                frmCrtViewer.crvCashCardReports.ReportSource = CType(myCRT, ReportDocument)
+                myCRT.Refresh()
+               blnReportPrinted = False
+                ReportType = CCPrintMode.FundRequestSummary
+                frmCrtViewer.ShowDialog(Me)
+                IsPrinted = blnReportPrinted
+            End If
+        Catch crtex As CrystalReportsException
+           WriteToLogFile("Printing Distribution List Error : " & crtex.Message)
+        Catch ingresex As IngresException
+            WriteToLogFile("Printing Distribution List Error : " & ingresex.Message)
+        Catch ex As Exception
+            WriteToLogFile("Printing Distribution List Error : " & ex.Message)
+        End Try
+        Return IsPrinted
+
+    End Function
+
+
