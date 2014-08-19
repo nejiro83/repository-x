@@ -1,0 +1,18 @@
+'Assuming that the DataSet has already have a value...
+ 
+Dim dset as new DataSet
+Dim columns as Integer = dset.Tables(0).Columns.Count
+Dim itemcoll(columns) as String
+ 
+For lv_row as Integer = 0 to dset.Tables(0).Rows.Count - 1
+  
+    For lv_col as Integer = 0 to columns - 1
+      
+      itemcoll(lv_col) = dset.Tables(0).Rows(lv_row)(lv_col).ToString
+      
+    Next
+    
+    Dim lvItem as New ListViewItem(itemcoll)
+    ListView1.Items.Add(lvItem)
+ 
+Next
